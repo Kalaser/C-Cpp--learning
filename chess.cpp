@@ -1,173 +1,202 @@
-#include<graphics.h>
-#include<stdio.h>
-//ÆåÅÌÊı¾İ½á¹¹
-char chboard_date [3][3] =
-{
-    {'_','_','_'},
-    {'_','_','_'},
-    {'_','_','_'},
+#include <graphics.h>
+#include <stdio.h>
+
+// æ£‹ç›˜æ•°æ®ç»“æ„ - Use constants for better performance
+constexpr int BOARD_SIZE = 3;
+constexpr int CELL_SIZE = 200;
+constexpr int WINDOW_SIZE = 600;
+constexpr int TARGET_FPS = 60;
+constexpr int FRAME_TIME = 1000 / TARGET_FPS;
+
+char chboard_date[BOARD_SIZE][BOARD_SIZE] = {
+    {'_', '_', '_'},
+    {'_', '_', '_'},
+    {'_', '_', '_'},
 };
 
-//±êÊ¶µ±Ç°Âä×ÓÀàĞÍ
-char current_piece ='O';
+// æ ‡è¯†å½“å‰ç©å®¶æ£‹å­
+char current_piece = 'O';
 
-//¼ì²âÖ¸¶¨Æå×ÓÍæ¼ÒÊÇ·ñ»ñÊ¤
-bool Checkwin(char c)
-{
-    if (chboard_date[0][0] == c && chboard_date[1][1] == c && chboard_date[2][2] == c)
+// ä¼˜åŒ–çš„èƒœåˆ©æ£€æŸ¥å‡½æ•° - Consolidated logic for better performance
+bool Checkwin(char c) {
+    // Check rows
+    for (int i = 0; i < BOARD_SIZE; ++i) {
+        if (chboard_date[i][0] == c && chboard_date[i][1] == c && chboard_date[i][2] == c) {
+            return true;
+        }
+    }
+    
+    // Check columns
+    for (int j = 0; j < BOARD_SIZE; ++j) {
+        if (chboard_date[0][j] == c && chboard_date[1][j] == c && chboard_date[2][j] == c) {
+            return true;
+        }
+    }
+    
+    // Check diagonals
+    if ((chboard_date[0][0] == c && chboard_date[1][1] == c && chboard_date[2][2] == c) ||
+        (chboard_date[0][2] == c && chboard_date[1][1] == c && chboard_date[2][0] == c)) {
         return true;
-    if (chboard_date[0][0] == c && chboard_date[0][1] == c && chboard_date[0][2] == c)
-        return true;
-    if (chboard_date[0][0] == c && chboard_date[1][0] == c && chboard_date[2][0] == c)
-        return true;
-    if (chboard_date[0][1] == c && chboard_date[1][1] == c && chboard_date[2][1] == c)
-        return true;
-    if (chboard_date[0][2] == c && chboard_date[1][2] == c && chboard_date[2][2] == c)
-        return true;
-    if (chboard_date[0][2] == c && chboard_date[1][1] == c && chboard_date[2][0] == c)
-        return true;
-    if (chboard_date[1][0] == c && chboard_date[1][1] == c && chboard_date[1][2] == c)
-        return true;
-    if (chboard_date[2][0] == c && chboard_date[2][1] == c && chboard_date[2][2] == c)
-        return true;
+    }
+    
     return false;
 }
 
-//¼ì²âÊÇ·ñÆ½¾Ö
-bool CheckDraw()
-{
-    for (size_t i = 0; i < 3; i++)
-    {
-        for (size_t j = 0; j<3; j++)
-        {
-            if(chboard_date[i][j] == '_')
-               return false;
+// æ£€æŸ¥æ˜¯å¦å¹³å±€ - Optimized with early return
+bool CheckDraw() {
+    for (int i = 0; i < BOARD_SIZE; ++i) {
+        for (int j = 0; j < BOARD_SIZE; ++j) {
+            if (chboard_date[i][j] == '_') {
+                return false; // Found empty cell, not a draw
+            }
         }
     }
-
     return true;
-
 }
 
-//»æÖÆÆåÅÌÍø¸ñ
-void DrawBoard()
-{
-    line(0, 200, 600, 200);
-    line(0, 400, 600, 400);
-    line(200, 0, 200, 600);
-    line(400, 0, 400, 600);
+// ç»˜åˆ¶æ£‹ç›˜ç½‘æ ¼ - Use constants for better maintainability
+void DrawBoard() {
+    // Horizontal lines
+    for (int i = 1; i < BOARD_SIZE; ++i) {
+        const int y = i * CELL_SIZE;
+        line(0, y, WINDOW_SIZE, y);
+    }
+    
+    // Vertical lines  
+    for (int i = 1; i < BOARD_SIZE; ++i) {
+        const int x = i * CELL_SIZE;
+        line(x, 0, x, WINDOW_SIZE);
+    }
 }
-//»æÖÆÆå×Ó
-void DrawPiece()
-{
-    for (size_t i =0; i < 3; i++)
-    {
-        for (size_t j =0; j<3; j++)
-        {
-            switch (chboard_date[i][j])
-            {
+
+// ç»˜åˆ¶æ£‹å­ - Optimized with constants and reduced calculations
+void DrawPiece() {
+    constexpr int RADIUS = CELL_SIZE / 2 - 10; // Circle radius
+    constexpr int CENTER_OFFSET = CELL_SIZE / 2; // Center offset
+    
+    for (int i = 0; i < BOARD_SIZE; ++i) {
+        for (int j = 0; j < BOARD_SIZE; ++j) {
+            const int centerX = j * CELL_SIZE + CENTER_OFFSET;
+            const int centerY = i * CELL_SIZE + CENTER_OFFSET;
+            
+            switch (chboard_date[i][j]) {
             case 'O':
-                circle(200 *j+100 ,200 *i +100,100);
+                circle(centerX, centerY, RADIUS);
                 break;
-            case 'X':
-                line(200 * j,200 * i, 200 *(j+1),200 *(i+1));
-                line(200 * (j+1),200 * i,200 * j,200 * (i+1));
+            case 'X': {
+                const int margin = 20;
+                const int left = j * CELL_SIZE + margin;
+                const int top = i * CELL_SIZE + margin;
+                const int right = (j + 1) * CELL_SIZE - margin;
+                const int bottom = (i + 1) * CELL_SIZE - margin;
+                
+                line(left, top, right, bottom);
+                line(right, top, left, bottom);
                 break;
+            }
             case '_':
-                break;
-            default:
+                // Empty cell, no drawing needed
                 break;
             }
         }
     }
-
 }
-//»æÖÆÌáÊ¾ĞÅÏ¢
-void DrawTipText()
-{
+
+// ç»˜åˆ¶æç¤ºä¿¡æ¯ - Optimized string handling
+void DrawTipText() {
     static TCHAR str[64];
-    _stprintf_s(str, _T("µ±Ç°Æå×ÓÀàĞÍ: %c"),current_piece);
+    _stprintf_s(str, _T("å½“å‰ç©å®¶æ£‹å­: %c"), current_piece);
 
-    settextcolor(RGB(224,175,45));
-    outtextxy(0,0,str);
-
+    settextcolor(RGB(224, 175, 45));
+    outtextxy(0, 0, str);
 }
 
-int main()
-{
-    initgraph(600,600);
+// åˆ‡æ¢ç©å®¶ - Extract function to reduce code duplication
+void SwitchPlayer() {
+    current_piece = (current_piece == 'O') ? 'X' : 'O';
+}
 
-    bool running =true;
+// æ£€æŸ¥æ¸¸æˆç»“æŸçŠ¶æ€
+enum class GameState {
+    CONTINUE,
+    X_WINS,
+    O_WINS,
+    DRAW
+};
 
+GameState CheckGameState() {
+    if (Checkwin('X')) return GameState::X_WINS;
+    if (Checkwin('O')) return GameState::O_WINS;
+    if (CheckDraw()) return GameState::DRAW;
+    return GameState::CONTINUE;
+}
+
+int main() {
+    initgraph(WINDOW_SIZE, WINDOW_SIZE);
+
+    bool running = true;
     ExMessage msg;
 
     BeginBatchDraw();
     DWORD start_time = GetTickCount();
 
-    while (running)
-    {
-       while (peekmessage(&msg))
-       {
-            //¼ì²éÊó±ê×ó¼ü°´¼ü°´ÏÂµÄÏûÏ¢
+    while (running) {
+        // å¤„ç†æ¶ˆæ¯é˜Ÿåˆ—ä¸­çš„æ‰€æœ‰æ¶ˆæ¯
+        while (peekmessage(&msg)) {
+            if (msg.message == WM_LBUTTONDOWN) {
+                // è®¡ç®—ç‚¹å‡»ä½ç½®å¯¹åº”çš„æ£‹ç›˜ç´¢å¼•
+                const int index_x = msg.x / CELL_SIZE;
+                const int index_y = msg.y / CELL_SIZE;
 
-            if (msg.message == WM_LBUTTONDOWN)
-            {
-                //¼ÆËãµã»÷Î»ÖÃ
-
-                int x = msg.x;
-                int y = msg.y;
-                
-                int index_x = x / 200;
-                int index_y = y / 200;
-
-                //³¢ÊÔÂä×Ó
-
-                if (chboard_date[index_y][index_x] == '_')
-                {
+                // è¾¹ç•Œæ£€æŸ¥å’Œç©ºä½æ£€æŸ¥
+                if (index_x >= 0 && index_x < BOARD_SIZE && 
+                    index_y >= 0 && index_y < BOARD_SIZE &&
+                    chboard_date[index_y][index_x] == '_') {
+                    
                     chboard_date[index_y][index_x] = current_piece;
-
-                    //ÇĞ»»Æå×ÓÀàĞÍ
-
-                    if (current_piece == 'O')
-                       current_piece = 'X';
-                    else 
-                        current_piece = 'O';
-                      
+                    SwitchPlayer();
                 }
             }
-       }
-       cleardevice();
+        }
 
-       DrawBoard();
-       DrawPiece();
-       DrawTipText();
+        // æ¸…å±å’Œç»˜åˆ¶
+        cleardevice();
+        DrawBoard();
+        DrawPiece();
+        DrawTipText();
+        FlushBatchDraw();
 
-       FlushBatchDraw();
-
-       if (Checkwin('x'))
-       {
-            MessageBox(GetHWnd(),_T("X Íæ¼Ò»ñÊ¤ "),_T(" ÓÎÏ·½áÊø"),MB_OK);
+        // æ£€æŸ¥æ¸¸æˆçŠ¶æ€
+        const GameState state = CheckGameState();
+        switch (state) {
+        case GameState::X_WINS:
+            MessageBox(GetHWnd(), _T("X ç©å®¶è·èƒœ!"), _T("æ¸¸æˆç»“æŸ"), MB_OK);
             running = false;
-       }
-      else if (Checkwin('O'))
-       {
-            MessageBox(GetHWnd(),_T("O Íæ¼Ò»ñÊ¤ "),_T(" ÓÎÏ·½áÊø"),MB_OK);
+            break;
+        case GameState::O_WINS:
+            MessageBox(GetHWnd(), _T("O ç©å®¶è·èƒœ!"), _T("æ¸¸æˆç»“æŸ"), MB_OK);
             running = false;
-       }
-       else if (CheckDraw())
-       {
-            MessageBox(GetHWnd(),_T("Ã»ÓĞÍæ¼Ò»ñÊ¤£¬Æ½¾Ö "),_T(" ÓÎÏ·½áÊø"),MB_OK);
+            break;
+        case GameState::DRAW:
+            MessageBox(GetHWnd(), _T("å¹³å±€!"), _T("æ¸¸æˆç»“æŸ"), MB_OK);
             running = false;
-       }
+            break;
+        case GameState::CONTINUE:
+            // Game continues
+            break;
+        }
 
-       DWORD end_time = GetTickCount();
-       DWORD delta_time = end_time -start_time;
-       if (delta_time <1000 / 60)
-       {
-           Sleep(1000 / 60 - delta_time);
-       }
+        // å¸§ç‡æ§åˆ¶ - Optimized timing
+        const DWORD end_time = GetTickCount();
+        const DWORD delta_time = end_time - start_time;
+        
+        if (delta_time < FRAME_TIME) {
+            Sleep(FRAME_TIME - delta_time);
+        }
+        start_time = GetTickCount();
     }
 
+    EndBatchDraw();
+    closegraph();
     return 0;
-    
 }
